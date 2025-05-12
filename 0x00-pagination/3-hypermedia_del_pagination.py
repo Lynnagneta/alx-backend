@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""
-Deletion-resilient hypermedia pagination
+"""Task 3: Deletion-resilient hypermedia pagination
 """
 
 import csv
-from typing import List, Dict
+from typing import Dict, List, Tuple
+
+
+def index_range(page: int, page_size: int) -> Tuple[int, int]:
+    """Retrieves the index range from a given page and page size."""
+    return ((page - 1) * page_size, ((page - 1) * page_size) + page_size)
 
 
 class Server:
-    """Server class to paginate a database of popular baby names.
-    """
+    """Server class to paginate a database of popular baby names."""
     DATA_FILE = "Popular_Baby_Names.csv"
 
     def __init__(self):
@@ -22,7 +25,7 @@ class Server:
             with open(self.DATA_FILE) as f:
                 reader = csv.reader(f)
                 dataset = [row for row in reader]
-            self.__dataset = dataset[1:]
+            self.__dataset = dataset[1:]  # Skip header
         return self.__dataset
 
     def indexed_dataset(self) -> Dict[int, List]:
@@ -35,27 +38,26 @@ class Server:
         return self.__indexed_dataset
 
     def get_hyper_index(self, index: int = None, page_size: int = 10) -> Dict:
-        """
-        Return a page from the dataset resilient to deletions.
-        """
+        """Deletion-resilient pagination"""
         assert isinstance(index, int) and index >= 0
         indexed_data = self.indexed_dataset()
-        assert index < len(self.__dataset)
+        assert index < len(self.dataset())
 
         data = []
         current_index = index
-        next_index = index
+        collected = 0
 
-        while len(data) < page_size and next_index < len(self.__dataset) + page_size:
-            item = indexed_data.get(next_index)
+        # Iterate until page_size valid entries are collected
+        while collected < page_size and current_index < len(self.dataset()) + page_size:
+            item = indexed_data.get(current_index)
             if item:
                 data.append(item)
-            next_index += 1
+                collected += 1
+            current_index += 1
 
         return {
-            "index": index,
-            "next_index": next_index,
-            "page_size": len(data),
-            "data": data,
+            'index': index,
+            'next_index': current_index,
+            'page_size': len(data),
+            'data': data,
         }
-
