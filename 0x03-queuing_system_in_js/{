@@ -1,0 +1,4 @@
+ets": [
+    "@babel/preset-env"
+  ]
+}
